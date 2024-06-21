@@ -1,5 +1,5 @@
 const { defineConfig } = require('cypress');
-const { dotenv } = require('dotenv');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
