@@ -1,6 +1,9 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - dev
   schedule:
     - cron: "0 */15 8-17 * *" # Exécuter toutes les 15 minutes pendant les jours ouvrables (8h-17h)
 
