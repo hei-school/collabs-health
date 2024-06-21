@@ -21,15 +21,24 @@ jobs:
   health-check:
     timeout-minutes: 4
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: 18.19.0
-
-      ## Run Cypress e2e tests ##
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+        ## Run Cypress e2e tests ##
       - name: Run e2e tests
         uses: cypress-io/github-action@v6
         with:
