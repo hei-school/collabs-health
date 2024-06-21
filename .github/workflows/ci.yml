@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  schedule:
+    - cron: "0 */15 8-17 * *" # Exécuter toutes les 15 minutes pendant les jours ouvrables (8h-17h)
+
+env:
+  CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
+
+  CYPRESS_MAIL_USERNAME: ${{ secrets.CYPRESS_MAIL_USERNAME }}
+  CYPRESS_MAIL_PASSWORD: ${{ secrets.CYPRESS_MAIL_PASSWORD }}
+
+  CYPRESS_MAIL_ADMIN_USERNAME: ${{ secrets.CYPRESS_MAIL_ADMIN_USERNAME }}
+  CYPRESS_MAIL_ADMIN_PASSWORD: ${{ secrets.CYPRESS_MAIL_ADMIN_PASSWORD }}
+
+  CYPRESS_OWNCLOUD_URL: ${{ secrets.CYPRESS_OWNCLOUD_URL }}
+  CYPRESS_OWNCLOUD_USERNAME: ${{ secrets.CYPRESS_OWNCLOUD_USERNAME }}
+  CYPRESS_OWNCLOUD_PASSWORD: ${{ secrets.CYPRESS_OWNCLOUD_PASSWORD }}
+
+jobs:
+  health-check:
+    timeout-minutes: 4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.19.0
+
+      ## Run Cypress e2e tests ##
+      - name: Run e2e tests
+        uses: cypress-io/github-action@v6
+        with:
+          start: pnpm run test
