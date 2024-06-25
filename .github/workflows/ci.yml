@@ -5,7 +5,7 @@ on:
     branches:
       - dev
   schedule:
-    - cron: "0 */15 8-17 * *" # Exécuter toutes les 15 minutes pendant les jours ouvrables (8h-17h)
+    - cron: "*/15 8-17 * * 1-5" # Exécuter toutes les 15 minutes pendant les jours ouvrables (8h-17h)
 
 env:
   CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
