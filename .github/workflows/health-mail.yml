@@ -1,0 +1,42 @@
+name: health-mail
+
+on:
+  push:
+    branches:
+      - dev
+  schedule:
+    - cron: "*/15 11-20 * * 1-5" # Exécuter toutes les 15 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
+
+env:
+  CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
+
+  CYPRESS_MAIL_USERNAME: ${{ secrets.CYPRESS_MAIL_USERNAME }}
+  CYPRESS_MAIL_PASSWORD: ${{ secrets.CYPRESS_MAIL_PASSWORD }}
+
+  CYPRESS_MAIL_ADMIN_USERNAME: ${{ secrets.CYPRESS_MAIL_ADMIN_USERNAME }}
+  CYPRESS_MAIL_ADMIN_PASSWORD: ${{ secrets.CYPRESS_MAIL_ADMIN_PASSWORD }}
+
+jobs:
+  health-check:
+    timeout-minutes: 4
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run mail tests
+        uses: cypress-io/github-action@v6
+        with:
+          spec: ./cypress/mail.cy.js, ./cypress/mail.admin.cy.js

@@ -1,4 +1,4 @@
-name: CI
+name: health-owncloud
 
 on:
   push:
@@ -8,15 +8,8 @@ on:
     - cron: "*/15 11-20 * * 1-5" # Exécuter toutes les 15 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
 
 env:
-  CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
-
-  CYPRESS_MAIL_USERNAME: ${{ secrets.CYPRESS_MAIL_USERNAME }}
-  CYPRESS_MAIL_PASSWORD: ${{ secrets.CYPRESS_MAIL_PASSWORD }}
-
-  CYPRESS_MAIL_ADMIN_USERNAME: ${{ secrets.CYPRESS_MAIL_ADMIN_USERNAME }}
-  CYPRESS_MAIL_ADMIN_PASSWORD: ${{ secrets.CYPRESS_MAIL_ADMIN_PASSWORD }}
-
   CYPRESS_OWNCLOUD_URL: ${{ secrets.CYPRESS_OWNCLOUD_URL }}
+
   CYPRESS_OWNCLOUD_USERNAME: ${{ secrets.CYPRESS_OWNCLOUD_USERNAME }}
   CYPRESS_OWNCLOUD_PASSWORD: ${{ secrets.CYPRESS_OWNCLOUD_PASSWORD }}
 
@@ -40,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run e2e tests
+      - name: Run owncloud tests
         uses: cypress-io/github-action@v6
         with:
-          start: npm run test
+          spec: ./cypress/owncloud.cy.js
