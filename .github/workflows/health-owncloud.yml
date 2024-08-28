@@ -5,7 +5,7 @@ on:
     branches:
       - dev
   schedule:
-    - cron: "*/15 11-20 * * 1-5" # Exécuter toutes les 15 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
+    - cron: "*/15 8-17 * * 1-5" # Exécuter toutes les 15 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
 
 env:
   CYPRESS_OWNCLOUD_URL: ${{ secrets.CYPRESS_OWNCLOUD_URL }}
@@ -36,4 +36,4 @@ jobs:
       - name: Run owncloud tests
         uses: cypress-io/github-action@v6
         with:
-          spec: ./cypress/owncloud.cy.js
+          spec: "./cypress/e2e/owncloud/*.js"
