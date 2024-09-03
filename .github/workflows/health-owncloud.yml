@@ -3,9 +3,9 @@ name: health-owncloud
 on:
   push:
     branches:
-      - dev
+      - main
   schedule:
-    - cron: "*/15 8-17 * * 1-5" # Exécuter toutes les 15 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
+    - cron: "*/5 8-17 * * 1-5" # Exécuter toutes les 5 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
 
 env:
   CYPRESS_OWNCLOUD_URL: ${{ secrets.CYPRESS_OWNCLOUD_URL }}
