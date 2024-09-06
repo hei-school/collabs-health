@@ -44,7 +44,7 @@ jobs:
 
       - name: Check Cypress test result
         id: check-result
-        run: echo "Tests status: ${{ steps.cypress-tests.outcome }}"
+        run: echo "Tests status ${{ steps.cypress-tests.outcome }}"
 
       - name: Retry EC2 Reboot if last 3 runs failed
         if: ${{ failure() }}
