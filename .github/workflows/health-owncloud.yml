@@ -5,13 +5,16 @@ on:
     branches:
       - main
   schedule:
-    - cron: "*/5 8-17 * * 1-5" # Exécuter toutes les 5 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
+    - cron: "*/5 8-17 * * 1-5" # Exécuter toutes les 5 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables
 
 env:
   CYPRESS_OWNCLOUD_URL: ${{ secrets.CYPRESS_OWNCLOUD_URL }}
 
   CYPRESS_OWNCLOUD_USERNAME: ${{ secrets.CYPRESS_OWNCLOUD_USERNAME }}
   CYPRESS_OWNCLOUD_PASSWORD: ${{ secrets.CYPRESS_OWNCLOUD_PASSWORD }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
 
 jobs:
   health-check:
@@ -34,6 +37,30 @@ jobs:
         run: npm install
 
       - name: Run owncloud tests
+        id: cypress-tests
         uses: cypress-io/github-action@v6
         with:
           spec: "./cypress/e2e/owncloud/*.js"
+
+      - name: Check Cypress test result
+        id: check-result
+        run: echo "Tests status: ${{ steps.cypress-tests.outcome }}"
+
+      - name: Retry EC2 Reboot if last 3 runs failed
+        if: ${{ failure() }}
+        run: |
+          echo "Checking previous runs..."
+          failed_runs=$(gh run list --limit 3 --json status --jq '[.[] | select(.status == "failure")] | length')
+          echo "Number of failed runs: $failed_runs"
+
+          if [ "$failed_runs" -ge 3 ]; then
+            echo "Rebooting EC2 instance i-0493946db836b490c..."
+            aws ec2 reboot-instances --instance-ids i-0493946db836b490c
+          else
+            echo "Not enough failed runs to trigger EC2 reboot."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
