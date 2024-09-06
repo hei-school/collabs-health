@@ -9,7 +9,6 @@ on:
 
 env:
   CYPRESS_OWNCLOUD_URL: ${{ secrets.CYPRESS_OWNCLOUD_URL }}
-
   CYPRESS_OWNCLOUD_USERNAME: ${{ secrets.CYPRESS_OWNCLOUD_USERNAME }}
   CYPRESS_OWNCLOUD_PASSWORD: ${{ secrets.CYPRESS_OWNCLOUD_PASSWORD }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -46,11 +45,18 @@ jobs:
         id: check-result
         run: echo "Tests status ${{ steps.cypress-tests.outcome }}"
 
-      - name: Retry EC2 Reboot if last 3 runs failed
-        if: ${{ failure() }}
+  check-and-reboot:
+    needs: health-check
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check previous runs and reboot EC2 if necessary
         run: |
           echo "Checking previous runs..."
-          failed_runs=$(gh run list --limit 3 --json status --jq '[.[] | select(.status == "failure")] | length')
+          failed_runs=$(gh run list --limit 3 --workflow "health-owncloud" --json conclusion --jq '[.[] | select(.conclusion == "failure")] | length')
           echo "Number of failed runs: $failed_runs"
 
           if [ "$failed_runs" -ge 3 ]; then
