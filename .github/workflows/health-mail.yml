@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "*/5 8-17 * * 1-5" # Exécuter toutes les 5 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables 
+    - cron: "*/5 8-17 * * 1-5" # Exécuter toutes les 5 minutes de 8h à 17h (UTC+3) pendant les jours ouvrables
 
 env:
   CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
@@ -17,7 +17,7 @@ env:
   CYPRESS_MAIL_ADMIN_PASSWORD: ${{ secrets.CYPRESS_MAIL_ADMIN_PASSWORD }}
 
 jobs:
-  health-check:
+  auth-check:
     timeout-minutes: 4
     runs-on: ubuntu-latest
     strategy:
@@ -39,4 +39,51 @@ jobs:
       - name: Run mail tests
         uses: cypress-io/github-action@v6
         with:
-          spec: "./cypress/e2e/mail/*.js"
+          spec: "./cypress/e2e/mail/auth-*.js"
+
+  send-mail:
+    needs: auth-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Send mail using Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          spec: "./cypress/e2e/mail/send-mail.js"
+        env:
+          CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
+          CYPRESS_MAIL_USERNAME: ${{ secrets.CYPRESS_MAIL_USERNAME }}
+          CYPRESS_MAIL_PASSWORD: ${{ secrets.CYPRESS_MAIL_PASSWORD }}
+          CYPRESS_MAIL_RECEIVER_USERNAME: ${{ secrets.CYPRESS_MAIL_RECEIVER_USERNAME }}
+
+  check-error-mail:
+    needs: send-mail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check for error mail
+        uses: cypress-io/github-action@v6
+        with:
+          spec: "./cypress/e2e/mail/check-error-mail.cy.js"

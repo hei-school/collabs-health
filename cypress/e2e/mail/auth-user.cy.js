@@ -7,6 +7,6 @@ describe("Mail Authentification", () => {
 
     cy.get("#rcmloginsubmit").click();
 
-    cy.url().should('include', "?_task");
+    cy.url().should("include", "?_task");
   });
 });

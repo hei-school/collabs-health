@@ -3,10 +3,9 @@ describe("Owncloud Authentification", () => {
     cy.visit(Cypress.env("owncloudUrl") + "/login");
 
     cy.get("#user").type(Cypress.env("owncloudUsername"));
-    cy.get("#password").type(Cypress.env("owncloudPassword") + '{enter}');
+    cy.get("#password").type(Cypress.env("owncloudPassword") + "{enter}");
 
     cy.wait(1500);
-    cy.url().should('include', Cypress.env("owncloudUrl") + "/apps/files");
+    cy.url().should("include", Cypress.env("owncloudUrl") + "/apps/files");
   });
 });
-
