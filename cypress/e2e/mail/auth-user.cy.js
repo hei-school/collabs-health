@@ -10,4 +10,3 @@ describe("Mail Authentification", () => {
     cy.url().should('include', "?_task");
   });
 });
-

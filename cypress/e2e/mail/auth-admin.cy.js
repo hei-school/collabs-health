@@ -8,4 +8,3 @@ describe("Mail Admin Authentification", () => {
     cy.url().should('include', "/admin/main.php");
   });
 });
-
