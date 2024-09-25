@@ -60,7 +60,7 @@ jobs:
       - name: Send mail using Cypress
         uses: cypress-io/github-action@v6
         with:
-          spec: "./cypress/e2e/mail/send-mail.js"
+          spec: "./cypress/e2e/mail/send-mail.cy.js"
         env:
           CYPRESS_MAIL_URL: ${{ secrets.CYPRESS_MAIL_URL }}
           CYPRESS_MAIL_USERNAME: ${{ secrets.CYPRESS_MAIL_USERNAME }}
