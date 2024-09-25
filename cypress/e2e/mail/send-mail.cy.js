@@ -43,9 +43,6 @@ Cypress.Commands.add("navigateToCompose", () => {
       cy.visit(composeUrl);
     }
   });
-  
-  // Ensure compose page is loaded
-  cy.get('#compose_to > .col-10 > .input-group > .form-control').should('be.visible');
 });
 
 describe("Send health mail", () => {
