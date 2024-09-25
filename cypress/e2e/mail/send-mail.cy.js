@@ -62,7 +62,10 @@ describe("Send health mail", () => {
     cy.login(Cypress.env("mailUsername"), Cypress.env("mailPassword"));
 
     cy.navigateToCompose();
-    cy.get('#compose_to', { timeout: 2000 }).should('be.visible').find('.form-control').type(Cypress.env("receiverMail"));
+
+    cy.url().should('include', '_task=mail&_action=compose');
+
+    cy.get('#compose_to > .col-10 > .input-group > .form-control', { timeout: 10000 }).should('be.visible').type(Cypress.env("receiverMail"));
     cy.get("#compose-subject").type(subject);
     cy.get("#composebody").type(subject);
     cy.get("#rcmbtn112").click();
