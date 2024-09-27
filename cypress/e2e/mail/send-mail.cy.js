@@ -35,14 +35,24 @@ Cypress.Commands.add("navigateToCompose", () => {
   const composeUrl = `${Cypress.env("mailUrl")}/?_task=mail&_action=compose`;
   cy.visit(composeUrl);
   
-  // Check for error box
+  // Handle potential redirects
+  cy.url().should('include', '_task=mail&_action=compose');
+  
+  // Wait for the page to stabilize
+  cy.get('body').should('not.have.class', 'loading');
+  
+  // Check for error box and retry if present
   cy.get('body').then($body => {
     if ($body.find('.boxerror').length > 0) {
-      // If error box is present, wait and try again
       cy.wait(5000); // Wait for 5 seconds
       cy.visit(composeUrl);
+      cy.url().should('include', '_task=mail&_action=compose');
+      cy.get('body').should('not.have.class', 'loading');
     }
   });
+  
+  // Ensure the compose form is visible
+  cy.get('#compose-content').should('be.visible');
 });
 
 describe("Send health mail", () => {
@@ -60,11 +70,9 @@ describe("Send health mail", () => {
 
     cy.navigateToCompose();
 
-    cy.url().should('include', '_task=mail&_action=compose');
-
-    cy.get('#compose_to', { timeout: 10000 }).should('be.visible').type(Cypress.env("receiverMail"));
-    cy.get("#compose-subject").type(subject);
-    cy.get("#composebody").type(subject);
+    cy.get('#compose_to', { timeout: 20000 }).should('be.visible').type(Cypress.env("receiverMail"));
+    cy.get("#compose-subject").should('be.visible').type(subject);
+    cy.get("#composebody").should('be.visible').type(subject);
     cy.get("#rcmbtn112").click();
 
     cy.visit(`${Cypress.env("mailUrl")}/?_task=mail&_mbox=Sent`);
