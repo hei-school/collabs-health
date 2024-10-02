@@ -7,17 +7,22 @@ Cypress.Commands.add("login", (username, password) => {
 });
 
 Cypress.Commands.add("extractSubjectsFromRows", (numRows = 10) => {
-  return cy.get('tr[id^="rcmrow"]').then(($rows) => {
-    const extractedSubjects = [];
-    $rows.slice(0, numRows).each((index, row) => {
-      cy.wrap(row)
-        .find("td.subject > .subject > a > span")
-        .invoke("text")
-        .then((text) => {
-          extractedSubjects.push(text.trim());
-        });
+  return cy.get("#messagelist-content").then(($messageList) => {
+    cy.wait(3000);
+
+    //TODO: It works only when user have minimum one mail on inbox
+    return cy.get('tr[id^="rcmrow"]').then(($rows) => {
+      const extractedSubjects = [];
+      $rows.slice(0, numRows).each((index, row) => {
+        cy.wrap(row)
+          .find("td.subject > .subject > a > span")
+          .invoke("text")
+          .then((text) => {
+            extractedSubjects.push(text.trim());
+          });
+      });
+      return cy.wrap(extractedSubjects);
     });
-    return cy.wrap(extractedSubjects);
   });
 });
 
