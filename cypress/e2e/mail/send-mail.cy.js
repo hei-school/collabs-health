@@ -7,9 +7,6 @@ Cypress.Commands.add("login", (username, password) => {
 });
 
 Cypress.Commands.add("extractSubjectsFromRows", (numRows = 10) => {
-  cy.wait(5000); // Attendre le chargement des messages
-
-  //TODO: It needs an email on inbox to create the element rcmrow
   return cy.get('tr[id^="rcmrow"]').then(($rows) => {
     const extractedSubjects = [];
     $rows.slice(0, numRows).each((index, row) => {
@@ -37,33 +34,33 @@ Cypress.Commands.add(
 Cypress.Commands.add("navigateToCompose", () => {
   const composeUrl = `${Cypress.env("mailUrl")}/?_task=mail&_action=compose`;
   cy.visit(composeUrl);
-
+  
   // Handle potential redirects
-  cy.url().should("include", "_task=mail&_action=compose");
-
+  cy.url().should('include', '_task=mail&_action=compose');
+  
   // Wait for the page to stabilize
-  cy.get("body").should("not.have.class", "loading");
-
+  cy.get('body').should('not.have.class', 'loading');
+  
   // Check for error box and retry if present
-  cy.get("body").then(($body) => {
-    if ($body.find(".boxerror").length > 0) {
+  cy.get('body').then($body => {
+    if ($body.find('.boxerror').length > 0) {
       cy.wait(5000); // Wait for 5 seconds
       cy.visit(composeUrl);
-      cy.url().should("include", "_task=mail&_action=compose");
-      cy.get("body").should("not.have.class", "loading");
+      cy.url().should('include', '_task=mail&_action=compose');
+      cy.get('body').should('not.have.class', 'loading');
     }
   });
-
+  
   // Ensure the compose form is visible
-  cy.get("#compose-content").should("be.visible");
+  cy.get('#compose-content').should('be.visible');
 });
 
 describe("Send health mail", () => {
-  Cypress.on("uncaught:exception", (err, runnable) => {
-    // returning false here prevents Cypress from failing the test
-    console.log("Uncaught exception:", err.message);
-    return false;
-  });
+  Cypress.on('uncaught:exception', (err, runnable) => {
+  // returning false here prevents Cypress from failing the test
+    console.log('Uncaught exception:', err.message)
+    return false
+  })
 
   it("should send health mail", () => {
     const currentTime = new Date().toLocaleString();
@@ -73,11 +70,9 @@ describe("Send health mail", () => {
 
     cy.navigateToCompose();
 
-    cy.get("#compose_to", { timeout: 20000 })
-      .should("be.visible")
-      .type(Cypress.env("receiverMail"));
-    cy.get("#compose-subject").should("be.visible").type(subject);
-    cy.get("#composebody").should("be.visible").type(subject);
+    cy.get('#compose_to', { timeout: 20000 }).should('be.visible').type(Cypress.env("receiverMail"));
+    cy.get("#compose-subject").should('be.visible').type(subject);
+    cy.get("#composebody").should('be.visible').type(subject);
     cy.get("#rcmbtn112").click();
 
     cy.visit(`${Cypress.env("mailUrl")}/?_task=mail&_mbox=Sent`);
