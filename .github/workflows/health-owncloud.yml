@@ -49,22 +49,34 @@ jobs:
   aws-setup-and-reboot:
     needs: health-check
     runs-on: ubuntu-latest
-    if: always() # Toujours exécuter pour vérifier les échecs consécutifs
+    if: failed() # exécuter si le jobs precedent falied
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify consecutive failures
-        id: verify-failures
+      - name: Install gh CLI
         run: |
-          echo "Checking previous runs..."
+          echo "Installing gh CLI..."
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Authenticate gh CLI
+        run: |
+          echo "${{ secrets.TOKEN_GITHUB }}" | gh auth login --with-token
+
+      - name: Verify consecutive failures
+        id: verify-consecutive-failures
+        run: |
+          echo "Checking previous runs for consecutive failures..."
           failed_runs=$(gh run list --limit 2 --workflow "health-owncloud" --json conclusion --jq '[.[] | select(.conclusion == "failure")] | length')
+          echo "Number of consecutive failed runs: $failed_runs"
           if [ "$failed_runs" -eq 2 ]; then
             echo "Two consecutive failures detected."
             echo "reboot_required=true" >> $GITHUB_ENV
           else
             echo "Not enough consecutive failures. Skipping reboot."
             echo "reboot_required=false" >> $GITHUB_ENV
+          fi
         env:
           GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
