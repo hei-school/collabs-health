@@ -55,19 +55,22 @@ jobs:
 
       - name: Send status for ownCloud
         run: |
+          echo $owncloud_template
+          echo $owncloud_trigger
           curl -X POST "$OWNCLOUD_WEBHOOK_URL" \
           -H "Content-Type: application/json" \
           -d '{
-            "trigger": "'"$owncloud_trigger"'",
-            "createTemplate": "'"$owncloud_template"'",
-            "status": "'"$owncloud_trigger"'"
+            "trigger": "$owncloud_trigger",
+            "createTemplate": "$owncloud_template",
+            "status": "$owncloud_trigger"
           }'
 
       - name: Send status for Mail
         run: |
+          echo
           curl -X POST "$MAIL_WEBHOOK_URL" \
           -H "Content-Type: application/json" \
           -d '{
-            "trigger": "'"$mail_trigger"'",
-            "resolveTemplate": "'"$mail_template"'"
+            "trigger": "$mail_trigger",
+            "resolveTemplate": "$mail_template"
           }'
