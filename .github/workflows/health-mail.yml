@@ -87,3 +87,19 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           spec: "./cypress/e2e/mail/check-error-mail.cy.js"
+
+  update-status:
+    needs: [check-error-mail]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set trigger value based on job status
+        id: set-trigger
+        run: echo "trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)" >> $GITHUB_ENV
+
+      - name: Send update to MAIL webhook
+        uses: fjogeleit/http-request-action@v1.16.3
+        with:
+          url: ${{ secrets.MAIL_WEBHOOK_URL }}
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"trigger": "${{ env.trigger }}"}'
