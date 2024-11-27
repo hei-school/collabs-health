@@ -1,0 +1,72 @@
+name: Status Webhook
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 8-17 * * 1-5" # Runs every 5 minutes from 8 AM to 5 PM (UTC+3) on weekdays
+
+env:
+  OWNCLOUD_WEBHOOK_URL: ${{ secrets.OWNCLOUD_WEBHOOK_URL }}
+  MAIL_WEBHOOK_URL: ${{ secrets.MAIL_WEBHOOK_URL }}
+  OWNCLOUD_TEMPLATE: ${{ secrets.OWNCLOUD_TEMPLATE }}
+  MAIL_TEMPLATE: ${{ secrets.MAIL_TEMPLATE }}
+
+jobs:
+  check-status:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check health-owncloud workflow status
+        id: owncloud-status
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const response = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'health-owncloud.yml',
+              per_page: 1
+            });
+            const lastRun = response.data.workflow_runs[0];
+            return lastRun.conclusion === 'success';
+
+      - name: Check health-mail workflow status
+        id: mail-status
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const response = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'health-mail.yml',
+              per_page: 1
+            });
+            const lastRun = response.data.workflow_runs[0];
+            return lastRun.conclusion === 'success';
+
+      - name: Set trigger for ownCloud
+        id: owncloud-trigger
+        run: echo "owncloud_trigger=$(if [ '${{ steps.owncloud-status.outputs.result }}' == 'true' ]; then echo 'up'; else echo 'down'; fi)" >> $GITHUB_ENV
+
+      - name: Set trigger for Mail
+        id: mail-trigger
+        run: echo "mail_trigger=$(if [ '${{ steps.mail-status.outputs.result }}' == 'true' ]; then echo 'up'; else echo 'down'; fi)" >> $GITHUB_ENV
+
+      - name: Send status for ownCloud
+        run: |
+          curl -X POST "$OWNCLOUD_WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "trigger": "'"$owncloud_trigger"'",
+            "createTemplate": "'"$OWNCLOUD_TEMPLATE"'",
+            "status": "PARTIALOUTAGE"
+          }'
+
+      - name: Send status for Mail
+        run: |
+          curl -X POST "$MAIL_WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "trigger": "'"$mail_trigger"'",
+            "resolveTemplate": "'"$MAIL_TEMPLATE"'"
+          }'
