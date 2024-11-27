@@ -1,6 +1,9 @@
 name: Status Webhook
 
 on:
+  push:
+    branches:
+      - "*"
   workflow_dispatch:
   schedule:
     - cron: "*/5 8-17 * * 1-5" # Runs every 5 minutes from 8 AM to 5 PM (UTC+3) on weekdays
@@ -8,8 +11,10 @@ on:
 env:
   OWNCLOUD_WEBHOOK_URL: ${{ secrets.OWNCLOUD_WEBHOOK_URL }}
   MAIL_WEBHOOK_URL: ${{ secrets.MAIL_WEBHOOK_URL }}
-  OWNCLOUD_TEMPLATE: ${{ secrets.OWNCLOUD_TEMPLATE }}
-  MAIL_TEMPLATE: ${{ secrets.MAIL_TEMPLATE }}
+  OWNCLOUD_TEMPLATE_OUTAGE: ${{ secrets.OWNCLOUD_TEMPLATE_OUTAGE }}
+  OWNCLOUD_TEMPLATE_RESOLVED: ${{ secrets.OWNCLOUD_TEMPLATE_RESOLVED }}
+  MAIL_TEMPLATE_OUTAGE: ${{ secrets.MAIL_TEMPLATE_OUTAGE }}
+  MAIL_TEMPLATE_RESOLVED: ${{ secrets.MAIL_TEMPLATE_RESOLVED }}
 
 jobs:
   check-status:
@@ -44,13 +49,27 @@ jobs:
             const lastRun = response.data.workflow_runs[0];
             return lastRun.conclusion === 'success';
 
-      - name: Set trigger for ownCloud
-        id: owncloud-trigger
-        run: echo "owncloud_trigger=$(if [ '${{ steps.owncloud-status.outputs.result }}' == 'true' ]; then echo 'up'; else echo 'down'; fi)" >> $GITHUB_ENV
+      - name: Set trigger and template for ownCloud
+        id: owncloud-template
+        run: |
+          if [ '${{ steps.owncloud-status.outputs.result }}' == 'true' ]; then
+            echo "owncloud_trigger=up" >> $GITHUB_ENV
+            echo "owncloud_template=$OWNCLOUD_TEMPLATE_RESOLVED" >> $GITHUB_ENV
+          else
+            echo "owncloud_trigger=down" >> $GITHUB_ENV
+            echo "owncloud_template=$OWNCLOUD_TEMPLATE_OUTAGE" >> $GITHUB_ENV
+          fi
 
-      - name: Set trigger for Mail
-        id: mail-trigger
-        run: echo "mail_trigger=$(if [ '${{ steps.mail-status.outputs.result }}' == 'true' ]; then echo 'up'; else echo 'down'; fi)" >> $GITHUB_ENV
+      - name: Set trigger and template for Mail
+        id: mail-template
+        run: |
+          if [ '${{ steps.mail-status.outputs.result }}' == 'true' ]; then
+            echo "mail_trigger=up" >> $GITHUB_ENV
+            echo "mail_template=$MAIL_TEMPLATE_RESOLVED" >> $GITHUB_ENV
+          else
+            echo "mail_trigger=down" >> $GITHUB_ENV
+            echo "mail_template=$MAIL_TEMPLATE_OUTAGE" >> $GITHUB_ENV
+          fi
 
       - name: Send status for ownCloud
         run: |
@@ -58,8 +77,8 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "trigger": "'"$owncloud_trigger"'",
-            "createTemplate": "'"$OWNCLOUD_TEMPLATE"'",
-            "status": "PARTIALOUTAGE"
+            "createTemplate": "'"$owncloud_template"'",
+            "status": "'"$owncloud_trigger"'"
           }'
 
       - name: Send status for Mail
@@ -68,5 +87,5 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "trigger": "'"$mail_trigger"'",
-            "resolveTemplate": "'"$MAIL_TEMPLATE"'"
+            "resolveTemplate": "'"$mail_template"'"
           }'
