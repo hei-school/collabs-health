@@ -96,3 +96,19 @@ jobs:
         run: |
           echo "Rebooting EC2 instance..."
           aws ec2 reboot-instances --instance-ids $AWS_INSTANCE_ID
+
+  update-status:
+    needs: [health-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set trigger value based on job status
+        id: set-trigger
+        run: echo "trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)" >> $GITHUB_ENV
+
+      - name: Send update to Owncloud webhook
+        uses: fjogeleit/http-request-action@v1.16.3
+        with:
+          url: ${{ secrets.OWNCLOUD_WEBHOOK_URL }}
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"trigger": "${{ env.trigger }}"}'
