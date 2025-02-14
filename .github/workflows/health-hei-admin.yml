@@ -30,24 +30,11 @@ jobs:
         with:
           spec: "./cypress/e2e/hei-admin/*.js"
 
-  notify-failure:
-    needs: health-check
-    runs-on: ubuntu-latest
-    if: failure()
-    steps:
-      - name: Send failure notification
+      - name: Send status to Instatus
+        if: ${{ always() && github.event_name == 'schedule' }}
         run: |
-          curl -X POST ${{ secrets.HEI_ADMIN_NOTIFICATION_URL }} \
-          -H "Content-Type: application/json" \
-          -d '{"status": "DOWN"}'
-
-  notify-success:
-    needs: health-check
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-      - name: Send success notification
-        run: |
-          curl -X POST ${{ secrets.HEI_ADMIN_NOTIFICATION_URL }} \
-          -H "Content-Type: application/json" \
-          -d '{"status": "UP"}'
+          trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)
+          echo "Trigger status is: $trigger"
+          curl -X POST "${{ vars.HEI_ADMIN_NOTIFICATION_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"trigger\": \"$trigger\"}"

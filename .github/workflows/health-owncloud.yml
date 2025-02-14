@@ -46,69 +46,11 @@ jobs:
         id: check-result
         run: echo "Tests status ${{ steps.cypress-tests.outcome }}"
 
-  aws-setup-and-reboot:
-    needs: health-check
-    runs-on: ubuntu-latest
-    if: failure()
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install gh CLI
+      - name: Send status to Instatus
+        if: ${{ always() && github.event_name == 'schedule' }}
         run: |
-          echo "Installing gh CLI..."
-          sudo apt-get update
-          sudo apt-get install -y gh
-
-      - name: Authenticate gh CLI
-        run: |
-          echo "${{ secrets.TOKEN_GITHUB }}" | gh auth login --with-token
-
-      - name: Verify consecutive failures
-        id: verify-consecutive-failures
-        run: |
-          echo "Checking previous runs for consecutive failures..."
-          failed_runs=$(gh run list --limit 2 --workflow "health-owncloud" --json conclusion --jq '[.[] | select(.conclusion == "failure")] | length')
-          echo "Number of consecutive failed runs: $failed_runs"
-          if [ "$failed_runs" -eq 2 ]; then
-            echo "Two consecutive failures detected."
-            echo "reboot_required=true" >> $GITHUB_ENV
-          else
-            echo "Not enough consecutive failures. Skipping reboot."
-            echo "reboot_required=false" >> $GITHUB_ENV
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-
-      - name: Install AWS CLI
-        if: env.reboot_required == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
-
-      - name: Configure AWS CLI
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ${{ secrets.AWS_REGION }}
-
-      - name: Reboot EC2 instance
-        run: |
-          echo "Rebooting EC2 instance..."
-          aws ec2 reboot-instances --instance-ids $AWS_INSTANCE_ID
-
-  update-status:
-    needs: [health-check]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set trigger value based on job status
-        id: set-trigger
-        run: echo "trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)" >> $GITHUB_ENV
-
-      - name: Send update to Owncloud webhook
-        uses: fjogeleit/http-request-action@v1.16.3
-        with:
-          url: ${{ secrets.OWNCLOUD_WEBHOOK_URL }}
-          method: 'POST'
-          customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"trigger": "${{ env.trigger }}"}'
+          trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)
+          echo "Trigger status is: $trigger"
+          curl -X POST "${{ vars.OWNCLOUD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"trigger\": \"$trigger\"}"
