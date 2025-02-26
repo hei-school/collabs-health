@@ -58,6 +58,6 @@ jobs:
         run: |
           trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)
           echo "Trigger status is: $trigger"
-          curl -X POST "${{ $CYPRESS_MAIL_URL }}" \
+          curl -X POST "${{ secrets.CYPRESS_MAIL_URL }}" \
             -H "Content-Type: application/json" \
             -d "{\"trigger\": \"$trigger\"}"

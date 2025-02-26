@@ -36,6 +36,6 @@ jobs:
         run: |
           trigger=$(if [ '${{ job.status }}' == 'failure' ]; then echo 'down'; else echo 'up'; fi)
           echo "Trigger status is: $trigger"
-          curl -X POST "${{ $HEI_ADMIN_NOTIFICATION_URL }}" \
+          curl -X POST "${{ secrets.HEI_ADMIN_NOTIFICATION_URL }}" \
             -H "Content-Type: application/json" \
             -d "{\"trigger\": \"$trigger\"}"
